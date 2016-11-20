@@ -5,33 +5,47 @@ var crypto = require('crypto');
 module.exports = {
   attributes: {
     username: {
-      type: 'string',
+      type: Sequelize.STRING,
+      field: 'email',
       unique: true,
       index: true,
       notNull: true
     },
     email: {
-      type: 'email',
+      type: Sequelize.STRING,
+      isEmail: true,
       unique: true,
       index: true
-    },
-    passports: {
-      collection: 'Passport',
-      via: 'user'
-    },
-
-    getGravatarUrl: function () {
-      var md5 = crypto.createHash('md5');
-      md5.update(this.email || '');
-      return 'https://gravatar.com/avatar/'+ md5.digest('hex');
-    },
-
-    toJSON: function () {
-      var user = this.toObject();
-      delete user.password;
-      user.gravatarUrl = this.getGravatarUrl();
-      return user;
     }
+  },
+
+  getGravatarUrl: function () {
+    var md5 = crypto.createHash('md5');
+    md5.update(this.email || '');
+    return 'https://gravatar.com/avatar/'+ md5.digest('hex');
+  },
+
+  toJSON: function () {
+    var user = this.toObject();
+    delete user.password;
+    user.gravatarUrl = this.getGravatarUrl();
+    return user;
+  },
+
+  associations: function() {
+    User.hasMany(Passport, {
+      as: 'passports', otherKey: 'user'
+    });
+  },
+
+  options: {
+    autoCreatedBy: false,
+    createdAt: false,
+    updatedAt: false,
+    tableName: 'users',
+    classMethods: {},
+    instanceMethods: {},
+    hooks: {}
   },
 
   beforeCreate: function (user, next) {

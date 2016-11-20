@@ -1,6 +1,6 @@
 {
-  "name": "sails-auth",
-  "version": "2.2.0",
+  "name": "sails-auth-sequelize",
+  "version": "1.0.0",
   "description": "Passport-based User Authentication system for sails.js applications.",
   "main": "dist/api/hooks/auth/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/tjwebb/sails-auth.git"
+    "url": "git://github.com/sglover/sails-auth.git"
   },
   "keywords": [
     "sails",
@@ -29,12 +29,12 @@
     "instagram",
     "youtube"
   ],
-  "author": "Travis Webb <me@traviswebb.com>",
+  "contributors": [ "Travis Webb <me@traviswebb.com>", "Steve Glover <steven.glover@gmail.com>" ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tjwebb/sails-auth/issues"
+    "url": "https://github.com/sglover/sails-auth/issues"
   },
-  "homepage": "https://github.com/tjwebb/sails-auth",
+  "homepage": "https://github.com/sglover/sails-auth",
   "dependencies": {
     "base64url": "^2.0.0",
     "bcryptjs": "^2.2",
@@ -43,7 +43,8 @@
     "passport": "^0.3",
     "passport-http": "^0.3",
     "passport-http-bearer": "^1.0.1",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "sequelize": "^3.24.8"
   },
   "bundledDependencies": [
     "bcryptjs",
@@ -64,8 +65,7 @@
     "mocha": "^3.1.0",
     "sails": "^0.12.5",
     "socket.io-client": "^1.3.5",
-    "supertest": "^2.0.0",
-    "waterline-sqlite3": "^1.0.3"
+    "supertest": "^2.0.0"
   },
   "engines": {
     "node": ">= 0.12",
