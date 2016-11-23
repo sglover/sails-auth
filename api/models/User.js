@@ -40,8 +40,8 @@ module.exports = {
 
   options: {
     autoCreatedBy: false,
-    createdAt: false,
-    updatedAt: false,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     tableName: 'users',
     classMethods: {},
     instanceMethods: {},
