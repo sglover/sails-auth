@@ -80,16 +80,6 @@ var Passport = {
     tokens: { type: Sequelize.JSON }
   },
 
-  /**
-   * Validate password used by the local strategy.
-   *
-   * @param {string}   password The password to validate
-   * @param {Function} next
-   */
-  validatePassword: function validatePassword(password, next) {
-    bcrypt.compare(password, this.password, next);
-  },
-
   associations: function associations() {
     // Associations
     //
@@ -107,7 +97,17 @@ var Passport = {
     updatedAt: false,
     tableName: 'passport',
     classMethods: {},
-    instanceMethods: {},
+    instanceMethods: {
+      /**
+       * Validate password used by the local strategy.
+       *
+       * @param {string}   password The password to validate
+       * @param {Function} next
+       */
+      validatePassword: function validatePassword(password, next) {
+        bcrypt.compare(password, this.password, next);
+      }
+    },
     hooks: {}
   },
 

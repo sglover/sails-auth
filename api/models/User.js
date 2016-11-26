@@ -4,32 +4,19 @@ var crypto = require('crypto');
 /** @module User */
 module.exports = {
   attributes: {
+    id: {
+      type: Sequelize.INTEGER,
+      field: 'id',
+      primaryKey: true,
+      autoIncrement: true
+    },
     username: {
       type: Sequelize.STRING,
       field: 'email',
       unique: true,
       index: true,
       notNull: true
-    },
-    email: {
-      type: Sequelize.STRING,
-      isEmail: true,
-      unique: true,
-      index: true
     }
-  },
-
-  getGravatarUrl: function () {
-    var md5 = crypto.createHash('md5');
-    md5.update(this.email || '');
-    return 'https://gravatar.com/avatar/'+ md5.digest('hex');
-  },
-
-  toJSON: function () {
-    var user = this.toObject();
-    delete user.password;
-    user.gravatarUrl = this.getGravatarUrl();
-    return user;
   },
 
   associations: function() {
@@ -43,8 +30,30 @@ module.exports = {
     createdAt: 'created_at',
     updatedAt: 'updated_at',
     tableName: 'users',
-    classMethods: {},
-    instanceMethods: {},
+    classMethods: {
+      /**
+       * Register a new User with a passport
+       */
+      register: function (user) {
+        return sails.services.passport.protocols.local.createUser(user);
+      }
+    },
+
+    instanceMethods: {
+      getGravatarUrl: function () {
+        var md5 = crypto.createHash('md5');
+        md5.update(this.email || '');
+        return 'https://gravatar.com/avatar/'+ md5.digest('hex');
+      },
+
+      toJSON: function () {
+        var user = this.toObject();
+        delete user.password;
+        user.gravatarUrl = this.getGravatarUrl();
+        return user;
+      }
+    },
+
     hooks: {}
   },
 
@@ -54,17 +63,4 @@ module.exports = {
     }
     next();
   },
-
-  /**
-   * Register a new User with a passport
-   */
-  register: function (user) {
-    return new Promise(function (resolve, reject) {
-      sails.services.passport.protocols.local.createUser(user, function (error, created) {
-        if (error) return reject(error);
-
-        resolve(created);
-      });
-    });
-  }
 };

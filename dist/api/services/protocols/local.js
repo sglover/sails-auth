@@ -40,39 +40,27 @@ exports.update = function (user, next) {
  * @param {String}   password
  * @param {Function} next
  */
-exports.createUser = function (_user, next) {
+exports.createUser = function (_user) {
   var accessToken = generateToken();
   var password = _user.password;
   delete _user.password;
 
-  return sails.models.user.create(_user, function (err, user) {
-    if (err) {
-      sails.log(err);
-
-      if (err.code === 'E_VALIDATION') {
-        return next(new SAError({ originalError: err }));
-      }
-
-      return next(err);
-    }
-
-    sails.models.passport.create({
+  return User.create(_user).then(function (user) {
+    return Passport.create({
       protocol: 'local',
       password: password,
       user: user.id,
       accessToken: accessToken
-    }, function (err, passport) {
-      if (err) {
-        if (err.code === 'E_VALIDATION') {
-          err = new SAError({ originalError: err });
-        }
-
-        return user.destroy(function (destroyErr) {
-          next(destroyErr || err);
-        });
+    }).then(function (passport) {
+      return user;
+    }).catch(function (err) {
+      if (err.code === 'E_VALIDATION') {
+        err = new SAError({ originalError: err });
       }
 
-      next(null, user);
+      return user.destroy().then(function () {
+        throw err;
+      });
     });
   });
 };
@@ -88,45 +76,23 @@ exports.createUser = function (_user, next) {
  * @param {String}   password
  * @param {Function} next
  */
-exports.updateUser = function (_user, next) {
+exports.updateUser = function (_user) {
   var password = _user.password;
   delete _user.password;
 
   var userFinder = _user.hasOwnProperty('id') ? { id: _user.id } : { username: _user.username };
 
-  return sails.models.user.update(userFinder, _user, function (err, user) {
-    if (err) {
-      sails.log(err);
-
-      if (err.code === 'E_VALIDATION') {
-        return next(new SAError({ originalError: err }));
-      }
-
-      return next(err);
-    }
-    // Update retrieves an array
-    user = user[0];
+  return User.findOne({ where: { userFinder: userFinder } }).then(function (user) {
     // Check if password has a string to replace it
     if (!!password) {
-      sails.models.passport.findOne({
-        protocol: 'local',
-        user: user.id
-      }, function (err, passport) {
+      return Passport.findOne({ where: { protocol: 'local', user: user.id } }).then(function (passport) {
         passport.password = password;
-        passport.save(function (err, passport) {
-          if (err) {
-            if (err.code === 'E_VALIDATION') {
-              err = new SAError({ originalError: err });
-            }
-
-            next(err);
-          }
-
-          next(null, user);
+        return passport.save({ fields: ['password'] }).then(function () {
+          return user;
         });
       });
     } else {
-      next(null, user);
+      return user;
     }
   });
 };
@@ -142,31 +108,12 @@ exports.updateUser = function (_user, next) {
  * @param {Object}   res
  * @param {Function} next
  */
-exports.connect = function (req, res, next) {
+exports.connect = function (req, res) {
   var user = req.user,
       password = req.param('password'),
       Passport = sails.models.passport;
 
-  Passport.findOne({
-    protocol: 'local',
-    user: user.id
-  }, function (err, passport) {
-    if (err) {
-      return next(err);
-    }
-
-    if (!passport) {
-      Passport.create({
-        protocol: 'local',
-        password: password,
-        user: user.id
-      }, function (err, passport) {
-        next(err, user);
-      });
-    } else {
-      next(null, user);
-    }
-  });
+  return Passport.findOrCreate({ where: { protocol: 'local', user: user.id }, defaults: { protocol: 'local', password: password, user: user.id } });
 };
 
 /**
@@ -181,7 +128,7 @@ exports.connect = function (req, res, next) {
  * @param {string}   password
  * @param {Function} next
  */
-exports.login = function (req, identifier, password, next) {
+exports.login = function (req, identifier, password) {
   var isEmail = validateEmail(identifier),
       query = {};
 
@@ -191,11 +138,7 @@ exports.login = function (req, identifier, password, next) {
     query.username = identifier;
   }
 
-  sails.models.user.findOne(query, function (err, user) {
-    if (err) {
-      return next(err);
-    }
-
+  User.findOne({ where: { query: query } }).then(function (user) {
     if (!user) {
       if (isEmail) {
         req.flash('error', 'Error.Passport.Email.NotFound');
@@ -203,31 +146,23 @@ exports.login = function (req, identifier, password, next) {
         req.flash('error', 'Error.Passport.Username.NotFound');
       }
 
-      return next(null, false);
-    }
-
-    sails.models.passport.findOne({
-      protocol: 'local',
-      user: user.id
-    }, function (err, passport) {
-      if (passport) {
+      return false;
+    } else {
+      Passport.findOne({ where: { protocol: 'local', user: user.id } }).then(function (passport) {
         passport.validatePassword(password, function (err, res) {
           if (err) {
-            return next(err);
+            throw err;
           }
 
           if (!res) {
             req.flash('error', 'Error.Passport.Password.Wrong');
-            return next(null, false);
+            return false;
           } else {
-            return next(null, user, passport);
+            return user, passport;
           }
         });
-      } else {
-        req.flash('error', 'Error.Passport.Password.NotSet');
-        return next(null, false);
-      }
-    });
+      });
+    }
   });
 };
 

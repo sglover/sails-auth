@@ -105,7 +105,7 @@ if (sails.services.passport) {
       return next(new Error('Neither a username nor email was available'));
     }
 
-    sails.models.passport.findOne({
+    Passport.findOne({
       provider: provider,
       identifier: query.identifier.toString()
     }).then(function (passport) {
