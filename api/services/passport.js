@@ -353,13 +353,16 @@ if (sails.services.passport) {
   });
 
   passport.deserializeUser(function (id, next) {
-    return sails.models.user.findOne(id)
-      .then(function (user) {
-        next(null, user || null);
-        return user;
-      })
-      .catch(next);
-
+    return sails.models.user.findOne({
+      where: {
+        email: id
+      }
+    })
+    .then(function (user) {
+      next(null, user || null);
+      return user;
+    })
+    .catch(next);
   });
 
   module.exports = passport;
