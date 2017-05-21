@@ -47,7 +47,7 @@ module.exports = {
       },
 
       toJSON: function () {
-        var user = this.toObject();
+        var user = this.get({ plain: true }); 
         delete user.password;
         user.gravatarUrl = this.getGravatarUrl();
         return user;
